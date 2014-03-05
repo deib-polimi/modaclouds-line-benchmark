@@ -45,14 +45,16 @@ public class EvaluationServer implements ActionListener {
 	private LineServerHandler handler;
 	private Map<Path, Long> lineEvaluationTimes = new HashMap<Path, Long>();
 	private Map<Path, Long> lqnsEvaluationTimes = new HashMap<Path, Long>();
-	private int nMaxThreads = Runtime.getRuntime().availableProcessors();
+	//private int nMaxThreads = Runtime.getRuntime().availableProcessors(); //does not allow the queue to grow, should wnsure immediate evaluation
+	private int nMaxThreads = 200;
 
 	private BlockingQueue<Runnable> queue = new SynchronousQueue<Runnable>();
 	private int totalNumberOfEvaluations = 0;
 
 	private int pendingLineEvaluations = 0;
 	private int pendingLqnsEvaluations = 0;
-	
+
+	private boolean parallel = true;
 	private final Logger logger = LoggerFactory.getLogger("Times Logger");
 
 	/**
@@ -60,6 +62,7 @@ public class EvaluationServer implements ActionListener {
 	 */
 	public EvaluationServer(boolean parallel) {
 
+		this.parallel = parallel;
 		if (!parallel)
 			nMaxThreads = 1;
 		// initialize the thread pool
@@ -102,7 +105,10 @@ public class EvaluationServer implements ActionListener {
 			incrementPendingLqnsEvaluations();
 
 		// launch the evaluation
-		executor.execute(eval);
+		if(parallel)
+			executor.execute(eval);
+		else 
+			eval.run();
 	}
 
 	public int getTotalNumberOfEvaluations() {

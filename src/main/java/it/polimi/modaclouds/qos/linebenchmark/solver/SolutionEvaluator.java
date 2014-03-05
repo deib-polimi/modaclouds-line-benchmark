@@ -114,6 +114,7 @@ public class SolutionEvaluator implements Runnable, ActionListener{
 		String solverProgram = "lqns";
 
 		String command = solverProgram+" "+filePath+" -f"; //using the fast option
+		System.out.println("Launch: "+command);
 		//String command = solverProgram+" "+filePath; //without using the fast option
 		try {		
 			ProcessBuilder pb = new ProcessBuilder(splitToCommandArray(command));

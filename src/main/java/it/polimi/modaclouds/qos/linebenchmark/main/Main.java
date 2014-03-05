@@ -59,6 +59,8 @@ public class Main {
 			}
 		});
 
+		
+		System.out.println("Starting LQNS evaluations");
 		for (File f : modelFiles) {
 			server.evaluateModel(f.toPath(), LQNS_SOLVER);
 		}
@@ -71,6 +73,7 @@ public class Main {
 			e.printStackTrace();
 		}
 
+		System.out.println("Starting LINE evaluations");
 		for (File f : modelFiles) {
 			server.evaluateModel(f.toPath(), LINE_SOLVER);
 		}
