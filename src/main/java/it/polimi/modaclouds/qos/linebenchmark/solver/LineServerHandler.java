@@ -34,6 +34,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class LineServerHandler implements ActionListener {
 	/** LINE connection handlers **/
 	private Socket lineSocket = null;
@@ -45,7 +48,7 @@ public class LineServerHandler implements ActionListener {
 	private BufferedReader socketIn = null;
 	private LineConnectionHandler socketLog;	
 	private Map<Path,ActionListener> listeners = new HashMap<Path, ActionListener>();
-
+	private static final Logger logger = LoggerFactory.getLogger(LineServerHandler.class);
 	public void closeConnections() {
 		if (out != null)
 			out.close();
@@ -95,7 +98,7 @@ public class LineServerHandler implements ActionListener {
 			// fallback to local host and retry
 			if (host != "localhost") {
 				closeConnections();
-				System.out.println("Don't know about host:" + host
+				logger.info("Don't know about host:" + host
 						+ ". Switching to localhost and trying reconnection.");
 				host = "localhost";
 				connectToLINEServer(host, port);
@@ -140,7 +143,7 @@ public class LineServerHandler implements ActionListener {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-		System.out.println("Connected to LINE on " + host + ":" + port);
+		logger.info("Connected to LINE on " + host + ":" + port);
 	}
 	
 
@@ -148,7 +151,7 @@ public class LineServerHandler implements ActionListener {
 		try {
 			String lineInvocation = "LINE" + " " + "\""
 					+ linePropFile.getAbsolutePath().replace('\\', '/') + "\"";
-			System.out.println(lineInvocation);
+			logger.info(lineInvocation);
 			ProcessBuilder pb = new ProcessBuilder(lineInvocation.split("\\s"));
 			pb.directory(directory);
 			pb.redirectErrorStream(true);
@@ -180,9 +183,7 @@ public class LineServerHandler implements ActionListener {
 		// build the command
 		String command = "SOLVE " + filePath.toAbsolutePath();
 		if (REfilePath != null)
-			command += " " + REfilePath.toAbsolutePath();
-		// "D://line_test//ofbiz ("+numExp+").xml D://line_test//ofbizRE ("+numExp+").xml";
-		//System.out.println("Sending: " + command);
+			command += " " + REfilePath.toAbsolutePath();	
 		// send the command
 		out.println(command);
 		out.flush();
@@ -207,10 +208,15 @@ public class LineServerHandler implements ActionListener {
 
 	public void addListener(Path filePath, SolutionEvaluator solutionEvaluator) {
 		listeners.put(filePath.getFileName(), solutionEvaluator);
+		logger.info("added listener:"+filePath.getFileName());
 	}
 
 	public void actionPerformed(ActionEvent e) {
-		if(e instanceof EvaluationCompletedEvent)
-			listeners.get(((EvaluationCompletedEvent)e).getModelPath().getFileName()).actionPerformed(e);
+		if(e instanceof EvaluationCompletedEvent){
+			EvaluationCompletedEvent event = (EvaluationCompletedEvent) e;
+			logger.debug("Evaluation completed on model: "+event.getModelPath()+" solver: "+event.getSolverName());
+			listeners.get(event.getModelPath().getFileName()).actionPerformed(e);
+		}
+		
 	}
 }

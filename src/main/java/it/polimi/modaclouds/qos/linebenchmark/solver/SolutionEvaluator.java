@@ -30,6 +30,8 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 
 import org.apache.commons.lang3.time.StopWatch;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class SolutionEvaluator implements Runnable, ActionListener{
 
@@ -47,6 +49,8 @@ public class SolutionEvaluator implements Runnable, ActionListener{
 	private static final int LQNS_RETURN_FATAL_ERROR = -1;
 
 	private LineServerHandler handler;
+	
+	private static final Logger logger = LoggerFactory.getLogger(SolutionEvaluator.class);
 
 	Path filePath; 
 	Path resultfilePath;	
@@ -103,7 +107,7 @@ public class SolutionEvaluator implements Runnable, ActionListener{
 			System.err.println("LINE server handle not initialized");
 			return;
 		}
-		handler.addListener(filePath,this);
+		handler.addListener(filePath,this);	
 		handler.solve(filePath, null);
 
 	}
@@ -114,7 +118,7 @@ public class SolutionEvaluator implements Runnable, ActionListener{
 		String solverProgram = "lqns";
 
 		String command = solverProgram+" "+filePath+" -f"; //using the fast option
-		System.out.println("Launch: "+command);
+		logger.info("Launch: "+command);
 		//String command = solverProgram+" "+filePath; //without using the fast option
 		try {		
 			ProcessBuilder pb = new ProcessBuilder(splitToCommandArray(command));
@@ -180,7 +184,7 @@ public class SolutionEvaluator implements Runnable, ActionListener{
 			String line = null;
 			while ((line = br.readLine()) != null){
 				if(show)
-					System.out.println("Pb: "+line);
+					logger.info("Pb: "+line);
 			}
 
 		} catch (IOException ioe) {

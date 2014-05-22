@@ -28,6 +28,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.commons.lang3.time.StopWatch;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class LineConnectionHandler implements Runnable {
 	private BufferedReader in;
@@ -37,6 +39,7 @@ public class LineConnectionHandler implements Runnable {
 	private Map<Path,String> evaluations = new HashMap<Path, String>();
 	private Map<Path,StopWatch> timers= new HashMap<Path, StopWatch>();
 	private ArrayList<ActionListener> listeners = new ArrayList<ActionListener>();
+	private static final Logger logger = LoggerFactory.getLogger(LineConnectionHandler.class);
 	String prefix="";
 
 	public LineConnectionHandler(BufferedReader in, String prefix) {
@@ -70,7 +73,6 @@ public class LineConnectionHandler implements Runnable {
 				Thread.sleep(10);
 				if(in.ready()){
 					String line = in.readLine();				
-					//System.out.println("LINE "+prefix+": "+line);
 
 					//set the starting
 					if(line.contains("MODEL"))
@@ -86,12 +88,12 @@ public class LineConnectionHandler implements Runnable {
 
 			} catch (IOException e) {
 				if(e.getMessage().equals("Stream closed"))
-					System.out.println("LINE "+prefix+": "+e.getMessage());
+					logger.info("LINE "+prefix+": "+e.getMessage());
 				else 
-					e.printStackTrace();
+					logger.error("Error in LINE communication",e);
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
-				e.printStackTrace();
+				logger.error("Error in LINE communication",e);
 			}
 	}
 
@@ -123,6 +125,7 @@ public class LineConnectionHandler implements Runnable {
 			timer = new StopWatch();		
 			timers.put(modelPath, timer);
 			timer.start();
+			logger.debug("Model: "+modelName+" SUBMITTED");
 		}else{
 			timer = timers.get(modelPath);
 			timer.stop();
@@ -131,6 +134,7 @@ public class LineConnectionHandler implements Runnable {
 			evaluationCompleted.setEvaluationTime(timer.getTime());
 			evaluationCompleted.setSolverName(Main.LINE_SOLVER);
 			evaluationCompleted.setModelPath(modelPath.getFileName());
+			logger.debug("Model: "+modelName+" "+status);
 			for(ActionListener l:listeners)
 				l.actionPerformed(evaluationCompleted);
 		}

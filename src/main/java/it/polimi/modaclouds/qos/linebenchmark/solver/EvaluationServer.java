@@ -27,10 +27,9 @@ import java.awt.event.ActionListener;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,21 +40,21 @@ import org.slf4j.LoggerFactory;
  */
 public class EvaluationServer implements ActionListener {
 
-	private ThreadPoolExecutor executor;
+	private ExecutorService executor;
 	private LineServerHandler handler;
 	private Map<Path, Long> lineEvaluationTimes = new HashMap<Path, Long>();
 	private Map<Path, Long> lqnsEvaluationTimes = new HashMap<Path, Long>();
 	//private int nMaxThreads = Runtime.getRuntime().availableProcessors(); //does not allow the queue to grow, should wnsure immediate evaluation
 	private int nMaxThreads = 200;
 
-	private BlockingQueue<Runnable> queue = new SynchronousQueue<Runnable>();
+
 	private int totalNumberOfEvaluations = 0;
 
 	private int pendingLineEvaluations = 0;
 	private int pendingLqnsEvaluations = 0;
 
 	private boolean parallel = true;
-	private final Logger logger = LoggerFactory.getLogger("Times Logger");
+	private final Logger logger = LoggerFactory.getLogger("timeLogger");
 
 	/**
 	 * 
@@ -66,8 +65,7 @@ public class EvaluationServer implements ActionListener {
 		if (!parallel)
 			nMaxThreads = 1;
 		// initialize the thread pool
-		executor = new ThreadPoolExecutor(1, nMaxThreads, 200,
-				TimeUnit.MILLISECONDS, queue);
+		executor = Executors.newCachedThreadPool();
 
 		// launch LINE
 		handler = new LineServerHandler();
@@ -137,6 +135,14 @@ public class EvaluationServer implements ActionListener {
 	
 	public synchronized boolean lqnsEvaluationsFinished(){
 		return pendingLqnsEvaluations == 0;
+	}
+
+	public synchronized int getPendingLineEvaluations() {
+		return pendingLineEvaluations;
+	}
+
+	public synchronized int getPendingLqnsEvaluations() {
+		return pendingLqnsEvaluations;
 	}
 
 	public void exit() {
